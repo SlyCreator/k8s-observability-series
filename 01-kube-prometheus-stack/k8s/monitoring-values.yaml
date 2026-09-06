@@ -1,0 +1,59 @@
+# kube-prometheus-stack values — Article 1
+# Tested against chart 89.2.3 (Prometheus Operator v0.93.1) on EKS 1.36
+prometheus:
+  prometheusSpec:
+    # Default is 10 days. 15 gives you two weekends of data.
+    retention: 15d
+    # Hard size ceiling below the volume size. Without this Prometheus prunes on
+    # age only and will write until the 50Gi volume is completely full, and a
+    # full TSDB does not degrade gracefully.
+    retentionSize: 45GiB
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp3
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 2Gi
+        cpu: 1000m
+
+grafana:
+  # Change this before using anywhere real. Prefer AWS Secrets Manager.
+  adminPassword: "monitoring-lab-2026"
+  persistence:
+    enabled: true
+    storageClassName: gp3
+    size: 10Gi
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp3
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+# Both already default to true. Stated explicitly so this file documents the
+# full shape of what is installed.
+nodeExporter:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: true

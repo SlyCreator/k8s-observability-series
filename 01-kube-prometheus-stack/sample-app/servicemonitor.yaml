@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: monitoring-demo
+  # Lives in monitoring, even though the app runs in default.
+  namespace: monitoring
+  labels:
+    # CRITICAL. Prometheus is configured with
+    #   serviceMonitorSelector: {matchLabels: {release: kube-prometheus-stack}}
+    # Without this label the ServiceMonitor is created successfully, appears in
+    # `kubectl get servicemonitors`, and is silently never scraped. No error,
+    # no event, no log line. Verify with:
+    #   kubectl get prometheus kube-prometheus-stack-prometheus -n monitoring \
+    #     -o jsonpath='{.spec.serviceMonitorSelector}'
+    release: kube-prometheus-stack
+spec:
+  endpoints:
+    - port: http          # the Service port NAME, not the number
+      path: /metrics
+      interval: 15s
+  selector:
+    matchLabels:
+      app: monitoring-demo
+  namespaceSelector:
+    matchNames:
+      - default           # where the app actually runs
